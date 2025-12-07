@@ -52,7 +52,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	CharacterRotationThisFrame = BlasterCharacter->GetActorRotation();
 	const FRotator Delta =UKismetMathLibrary::NormalizedDeltaRotator(CharacterRotationThisFrame, CharacterRotationLastFrame);
 	const float Target = Delta.Yaw / DeltaSeconds;
-	const float NewLean = FMath::FInterpTo(Lean, Target, DeltaSeconds, 5.f);
+	const float NewLean = FMath::FInterpTo(Lean, Target, DeltaSeconds, 20.f);
 	Lean = FMath::Clamp(NewLean, -90.f, 90.f);
 	AO_Yaw = BlasterCharacter->GetAO_Yaw();
 	AO_Pitch = BlasterCharacter->GetAO_Pitch();
