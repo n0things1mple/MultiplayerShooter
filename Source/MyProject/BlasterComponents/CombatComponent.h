@@ -32,6 +32,12 @@ protected:
 	
 	
 	void FireButtionPressed(bool bPressed);
+	
+	UFUNCTION( Server, Reliable)
+	void ServerFire();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire();
 private:
 	
 	class ABlasterCharacter* Character;
