@@ -23,6 +23,12 @@ ABlasterCharacter::ABlasterCharacter()
 	CameraBoom->SetupAttachment(GetMesh());
 	CameraBoom->TargetArmLength = 600.0f;
 	CameraBoom->bUsePawnControlRotation = true;
+	
+	DefaultCameraArmLength = 600.f;
+	AimingCameraArmLength = 300.f;
+
+	DefaultFOV = 90.f;
+	AimingFOV = 75.f;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -58,6 +64,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	AimOffset(DeltaTime);
+	UpdateCameraOnAiming(DeltaTime);
 	
 
 }
@@ -234,6 +241,27 @@ void ABlasterCharacter::FireButtonPressed()
 void ABlasterCharacter::FireButtonReleased()
 {
 	Combat->FireButtionPressed(false);
+}
+
+void ABlasterCharacter::UpdateCameraOnAiming(float DeltaTime)
+{
+	if (!CameraBoom || !FollowCamera) return;
+
+	const bool bIsAiming = IsAiming(); // 你已经写好了这个函数：return (Combat && Combat->bAiming);
+
+	// 目标参数
+	const float TargetArmLength = bIsAiming ? AimingCameraArmLength : DefaultCameraArmLength;
+	const FVector TargetSocketOffset = bIsAiming ? AimingCameraSocketOffset : DefaultCameraSocketOffset;
+	const float TargetFOV = bIsAiming ? AimingFOV : DefaultFOV;
+
+	// 插值当前到目标
+	const float NewArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetArmLength, DeltaTime, CameraInterpSpeed);
+	const FVector NewSocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetSocketOffset, DeltaTime, CameraInterpSpeed);
+	const float NewFOV = FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaTime, CameraInterpSpeed);
+
+	CameraBoom->TargetArmLength = NewArmLength;
+	CameraBoom->SocketOffset = NewSocketOffset;
+	FollowCamera->SetFieldOfView(NewFOV);
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)

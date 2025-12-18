@@ -36,6 +36,7 @@ protected:
 	void AimOffset(float DeltaTime);
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void UpdateCameraOnAiming(float DeltaTime);
 	
 	
 
@@ -72,6 +73,28 @@ private:
 	UPROPERTY(EditAnywhere, Category= Combat )
 	class UAnimMontage* FireWeaponMontage;
 	
+	//camera zooming in when aiming
+	// 瞄准相机参数
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float DefaultCameraArmLength = 600.f;
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float AimingCameraArmLength = 300.f; // 瞄准时拉近
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	FVector DefaultCameraSocketOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	FVector AimingCameraSocketOffset = FVector(0.f, 50.f, 20.f); // 往右、往上稍微偏一点
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float DefaultFOV = 90.f;
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float AimingFOV = 75.f; // 瞄准时稍微 zoom 一点
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float CameraInterpSpeed = 10.f; // 插值速度
 public:	
 	
 	void SetOverlappingWeapon(AWeapon* Weapon);
