@@ -42,9 +42,13 @@ protected:
 	
 	
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
+	
+	void SetHUDCrosshairs(float DeltaTime);
 private:
 	
 	class ABlasterCharacter* Character;
+	class ABlasterPlayerController* Controller;
+	class ABlasterHUD* HUD;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
@@ -59,6 +63,8 @@ private:
 	
 	bool bFireButtonPressed;
 	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* DefaultCrosshair;
 	};
 
 
