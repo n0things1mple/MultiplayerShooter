@@ -65,7 +65,13 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* DefaultCrosshair;
-	};
+	
+	/**
+	 * HUD and Crosshairs
+	*/
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;	
+};
 
 
 
