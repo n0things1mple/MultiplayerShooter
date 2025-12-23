@@ -73,6 +73,8 @@ private:
 	UPROPERTY(EditAnywhere, Category= Combat )
 	class UAnimMontage* FireWeaponMontage;
 	
+	
+	
 	//camera zooming in when aiming
 	// 瞄准相机参数
 	UPROPERTY(EditAnywhere, Category = Camera)
@@ -104,5 +106,7 @@ public:
 	FORCEINLINE float GetAO_Pitch() const {return AO_Pitch;}
 	AWeapon* GetEquippedWeapon();
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const {return TurningInPlace;}
+	
+	FVector GetHitTarget() const;
 
 };

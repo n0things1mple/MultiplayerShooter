@@ -288,6 +288,15 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	if (Combat == nullptr) return FVector();
+	return Combat->HitTarget;
+	
+		
+	
+}
+
 void ABlasterCharacter::SeverEquipButtonPressed_Implementation()
 {
 	if (Combat)
