@@ -65,13 +65,37 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 		
-		if (BlasterCharacter->IsLocallyControlled())
+		if (BlasterCharacter)
 		{
-			bLocallyControlled = true;
-			FTransform RightHandTransform = BlasterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"),RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation()+(RightHandTransform.GetLocation()-BlasterCharacter->GetHitTarget()));
+			// 每帧都更新，别只在 if 里设 true
+			bLocallyControlled = BlasterCharacter->IsLocallyControlled();
+
+			const FTransform RightHandTransform =
+				BlasterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"), RTS_World);
+
+			const FVector HandLoc = RightHandTransform.GetLocation();
+
+			FVector TargetPoint;
+
+			if (bLocallyControlled)
+			{
+				// 本地：用准星 trace 的命中点（最准）
+				TargetPoint = BlasterCharacter->GetHitTarget();
+			}
+			else
+			{
+				// 远端：用角色的 BaseAimRotation（会包含 RemoteViewPitch 等，适用于模拟代理）
+				const FRotator AimRot = BlasterCharacter->GetBaseAimRotation();
+				TargetPoint = HandLoc + AimRot.Vector() * 10000.f;   // 乘 1000/10000 都行，远一点更稳定
+			}
+
+			// 你原来的“镜像目标点”（反方向补偿）逻辑保持不变
+			const FVector MirroredTarget = HandLoc + (HandLoc - TargetPoint);
+
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HandLoc, MirroredTarget);
 			RightHandRotation.Roll += 180.f;
 		}
+
 	}
 	
 }
