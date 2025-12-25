@@ -92,8 +92,13 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			// 你原来的“镜像目标点”（反方向补偿）逻辑保持不变
 			const FVector MirroredTarget = HandLoc + (HandLoc - TargetPoint);
 
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HandLoc, MirroredTarget);
-			RightHandRotation.Roll += 180.f;
+		
+			FRotator DesiredRot = UKismetMathLibrary::FindLookAtRotation(HandLoc, MirroredTarget);
+			DesiredRot.Roll += 180.f;
+
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, DesiredRot, DeltaSeconds, 30.f);
+			RightHandRotation.Normalize();
+
 		}
 
 	}
