@@ -120,6 +120,24 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 	
 }
 
+void ABlasterCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
+void ABlasterCharacter::PlayHitReactMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName("FromFront");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::MoveForward(float Value)
 {
 	if (Controller != nullptr && Value != 0.f)
@@ -321,7 +339,7 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	if (!IsLocallyControlled()) return;
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
 	{
-		GetMesh()->SetVisibility(false, true);
+		GetMesh()->SetVisibility(false);
 		if (Combat && Combat->EquippedWeapon &&Combat->EquippedWeapon->GetWeaponMesh())
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
@@ -329,7 +347,7 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	}
 	else
 	{
-		GetMesh()->SetVisibility(true, true);
+		GetMesh()->SetVisibility(true);
 		if (Combat && Combat->EquippedWeapon &&Combat->EquippedWeapon->GetWeaponMesh())
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;

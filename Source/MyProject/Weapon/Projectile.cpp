@@ -7,6 +7,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "MyProject/Character/BlasterCharacter.h"
 
 
 AProjectile::AProjectile()
@@ -47,9 +48,14 @@ void AProjectile::BeginPlay()
 	
 }
 
-void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor*, UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,
 	const FHitResult& Hit)
 {
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->MulticastHit();
+	}
 	Destroy();
 }
 
