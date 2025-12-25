@@ -74,7 +74,7 @@ private:
 	class UAnimMontage* FireWeaponMontage;
 	
 	
-	
+	/*
 	//camera zooming in when aiming
 	// 瞄准相机参数
 	UPROPERTY(EditAnywhere, Category = Camera)
@@ -97,6 +97,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Camera)
 	float CameraInterpSpeed = 10.f; // 插值速度
+	*/
 public:	
 	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -108,5 +109,5 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const {return TurningInPlace;}
 	
 	FVector GetHitTarget() const;
-
+	FORCEINLINE UCameraComponent* GetFollowCamera() const {return FollowCamera;}
 };

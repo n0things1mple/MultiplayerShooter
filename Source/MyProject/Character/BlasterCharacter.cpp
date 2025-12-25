@@ -24,12 +24,7 @@ ABlasterCharacter::ABlasterCharacter()
 	CameraBoom->TargetArmLength = 600.0f;
 	CameraBoom->bUsePawnControlRotation = true;
 	
-	DefaultCameraArmLength = 600.f;
-	AimingCameraArmLength = 300.f;
-
-	DefaultFOV = 90.f;
-	AimingFOV = 75.f;
-
+	
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
@@ -64,7 +59,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	AimOffset(DeltaTime);
-	UpdateCameraOnAiming(DeltaTime);
+	
 	
 
 }
@@ -242,7 +237,7 @@ void ABlasterCharacter::FireButtonReleased()
 {
 	Combat->FireButtionPressed(false);
 }
-
+/*
 void ABlasterCharacter::UpdateCameraOnAiming(float DeltaTime)
 {
 	if (!CameraBoom || !FollowCamera) return;
@@ -263,6 +258,7 @@ void ABlasterCharacter::UpdateCameraOnAiming(float DeltaTime)
 	CameraBoom->SocketOffset = NewSocketOffset;
 	FollowCamera->SetFieldOfView(NewFOV);
 }
+*/
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
 {
