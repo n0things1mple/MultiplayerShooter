@@ -41,6 +41,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 	TurningInPlace = BlasterCharacter->GetTurningInPlace();
 	
+
+	
 	//Offset Yaw For Strafing
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(BlasterCharacter->GetVelocity());

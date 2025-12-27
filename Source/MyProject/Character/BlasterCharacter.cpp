@@ -12,7 +12,7 @@
 #include "MyProject/BlasterComponents/CombatComponent.h"
 #include "MyProject/Weapon/Weapon.h"
 #include "net/UnrealNetwork.h"
-
+#include "MyProject/MyProject.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -40,8 +40,10 @@ ABlasterCharacter::ABlasterCharacter()
 	
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera,ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera,ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
+	
 	
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	
@@ -59,7 +61,11 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
 	AimOffset(DeltaTime);
+	
+	
 	HideCameraIfCharacterClose();
 	
 	
@@ -222,6 +228,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	if (Speed == 0.f && !bIsInAir)//standing still, not jumping
 	{
+	
 		FRotator CurrentAimRotation = FRotator(0.f,GetBaseAimRotation().Yaw,0.f);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation,StartingAimRotation);
 		AO_Yaw = DeltaAimRotation.Yaw;
@@ -236,6 +243,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	}
 	if (Speed > 0.f || bIsInAir)//moving or jumping
 	{
+		
 		StartingAimRotation = FRotator(0.f,GetBaseAimRotation().Yaw,0.f);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
@@ -244,6 +252,8 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	AO_Pitch = GetBaseAimRotation().GetNormalized().Pitch;
 	
 }
+
+
 
 void ABlasterCharacter::FireButtonPressed()
 {

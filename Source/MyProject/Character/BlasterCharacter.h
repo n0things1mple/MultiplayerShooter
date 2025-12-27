@@ -86,6 +86,9 @@ private:
 	float CameraThreshold = 200.f;
 	
 	
+	
+	
+	
 	/*
 	//camera zooming in when aiming
 	// 瞄准相机参数
@@ -122,4 +125,6 @@ public:
 	
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const {return FollowCamera;}
+	
+	
 };
