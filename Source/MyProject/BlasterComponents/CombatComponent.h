@@ -31,8 +31,9 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
-	
-	
+	void Fire();
+
+
 	void FireButtionPressed(bool bPressed);
 	
 	UFUNCTION( Server, Reliable)
@@ -95,6 +96,18 @@ private:
 	float ZoomInterpSpeed = 20.f;
 	
 	void InterpFOV(float DeltaTime);
+	
+	/*
+	 *AutoFire
+	 */
+	FTimerHandle AutoFireTimer;
+	
+	
+	
+	bool bCanFire=true;
+	
+	void StartAutoFireTimer();
+	void AutoFireTimerFinished();
 };
 
 
