@@ -13,6 +13,7 @@
 #include "MyProject/Weapon/Weapon.h"
 #include "net/UnrealNetwork.h"
 #include "MyProject/MyProject.h"
+#include "MyProject/PlayerController/BlasterPlayerController.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -56,6 +57,12 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health,MaxHealth);
+	}
+	
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -98,6 +105,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME_CONDITION(ABlasterCharacter,OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter,Health);
 	
 }
 
@@ -363,6 +371,11 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+	
+}
+
+void ABlasterCharacter::OnRep_Health()
+{
 	
 }
 
