@@ -22,6 +22,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
+	void PlayElimMontage();
+	UFUNCTION(NetMulticast,reliable)
 	void Elim();
 	
 protected:
@@ -82,6 +84,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
 	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ElimMontage;
+	
 	void HideCameraIfCharacterClose();
 	
 	UPROPERTY(EditAnywhere)
@@ -101,6 +106,8 @@ private:
 	void OnRep_Health();
 	
 	class ABlasterPlayerController* BlasterPlayerController;
+	
+	bool bElimmed = false;
 	
 	
 	/*
@@ -139,6 +146,9 @@ public:
 	
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const {return FollowCamera;}
+	
+	
+	FORCEINLINE bool IsElimmed() const {return bElimmed;}
 	
 	
 };

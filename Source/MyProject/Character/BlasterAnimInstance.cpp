@@ -41,6 +41,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 	TurningInPlace = BlasterCharacter->GetTurningInPlace();
 	
+	bElimmed = BlasterCharacter->IsElimmed();
+	
 
 	
 	//Offset Yaw For Strafing
