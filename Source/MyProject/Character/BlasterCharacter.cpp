@@ -15,6 +15,7 @@
 #include "MyProject/MyProject.h"
 #include "MyProject/GameMode/BlasterGameMode.h"
 #include "MyProject/PlayerController/BlasterPlayerController.h"
+#include "TimerManager.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -153,6 +154,7 @@ void ABlasterCharacter::PlayElimMontage()
 	}
 }
 
+
 void ABlasterCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
@@ -185,15 +187,33 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 		
 		}
 	}
-	
-	
-	
 }
 
-void ABlasterCharacter::Elim_Implementation()
+void ABlasterCharacter::Elim()
+{
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(
+		ElimTimerHandle,
+		this,
+		&ABlasterCharacter::ElimTimerFinished,
+		ElimDelay);
+}
+
+
+void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
 	PlayElimMontage();
+}
+
+void ABlasterCharacter::ElimTimerFinished()
+{
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (BlasterGameMode)
+	{
+		BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+		BlasterGameMode->RequestRespawn(this,BlasterPlayerController);
+	}
 }
 
 void ABlasterCharacter::MoveForward(float Value)
@@ -423,6 +443,8 @@ void ABlasterCharacter::OnRep_Health()
 	UpdateHUDHealth();
 	PlayHitReactMontage();
 }
+
+
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {

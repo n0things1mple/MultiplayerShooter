@@ -23,8 +23,9 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
 	void PlayElimMontage();
-	UFUNCTION(NetMulticast,reliable)
 	void Elim();
+	UFUNCTION(NetMulticast,reliable)
+	void MulticastElim();
 	
 protected:
 	
@@ -108,6 +109,13 @@ private:
 	class ABlasterPlayerController* BlasterPlayerController;
 	
 	bool bElimmed = false;
+	
+	FTimerHandle ElimTimerHandle;
+	
+	void ElimTimerFinished();
+	
+	UPROPERTY(EditdefaultsOnly)
+	float ElimDelay = 3.f;
 	
 	
 	/*
