@@ -116,7 +116,7 @@ private:
 	void ElimTimerFinished();
 	
 	UPROPERTY(EditdefaultsOnly)
-	float ElimDelay = 3.f;
+	float ElimDelay = 4.f;
 	
 	/*
 	 *dissolve effect
@@ -143,6 +143,13 @@ private:
 	//material instance set on the Blueprint,used with the dynamic material instance
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UMaterialInstance* DissolveMaterialInstance;
+	
+	//ElimMontage
+	UPROPERTY()
+	float ElimMontageLength = 0.f;
+	
+	FTimerHandle StartDissolveTimerHandle;
+
 	
 	
 	/*

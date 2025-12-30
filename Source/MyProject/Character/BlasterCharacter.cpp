@@ -149,11 +149,13 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 
 void ABlasterCharacter::PlayElimMontage()
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+	ElimMontageLength = 0.f;
 	if (AnimInstance && ElimMontage)
 	{
-		AnimInstance->Montage_Play(ElimMontage);
+		ElimMontageLength = AnimInstance->Montage_Play(ElimMontage);
 	}
+	
 }
 
 
@@ -178,7 +180,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	UpdateHUDHealth();
 	
 	PlayHitReactMontage();
-	if (Health <= 0.f)
+	if (Health == 0.f)
 	{
 		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
 		if (BlasterGameMode)
@@ -206,15 +208,43 @@ void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
 	PlayElimMontage();
+	
+	const float MontageLen = ElimMontageLength;
+	const float Buffer = 0.2f;
+	const float Delay = FMath::Max(0.f, MontageLen - Buffer);
 
-	if (DissolveMaterialInstance)
+	FTimerDelegate DissolveDelegate;
+	DissolveDelegate.BindLambda([this]()
 	{
-		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance,this);
-		GetMesh()->SetMaterial(0,DynamicDissolveMaterialInstance);
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"),0.55f);
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"),0.55f);
+		if (DissolveMaterialInstance)
+		{
+			DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+			GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+			DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+			DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 0.55f);
+		}
+		StartDissolve();
+	});
+
+	GetWorldTimerManager().SetTimer(
+		StartDissolveTimerHandle,
+		DissolveDelegate,
+		Delay,
+		false
+	);
+	
+	//disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
 	}
-	StartDissolve();
+	
+	//disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 }
 
 void ABlasterCharacter::ElimTimerFinished()

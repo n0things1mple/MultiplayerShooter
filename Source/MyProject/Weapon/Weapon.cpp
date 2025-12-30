@@ -104,7 +104,11 @@ void AWeapon::SetWeaponState(EWeaponState State)
 		ShowPickupWidget(false);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
+	case EWeaponState::EWS_Dropped:
+		break;
 	}
+	
+	
 	
 }
 
@@ -154,5 +158,10 @@ void AWeapon::Fire(const FVector& HitTarget)
 			
 		}
 	}
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
 }
 
