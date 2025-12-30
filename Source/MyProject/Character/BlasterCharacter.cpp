@@ -195,6 +195,10 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 void ABlasterCharacter::Elim()
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
 		ElimTimerHandle,
