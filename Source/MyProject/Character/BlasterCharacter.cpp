@@ -261,6 +261,8 @@ void ABlasterCharacter::ElimTimerFinished()
 	}
 }
 
+
+
 void ABlasterCharacter::MoveForward(float Value)
 {
 	if (Controller != nullptr && Value != 0.f)
@@ -495,6 +497,12 @@ void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
 	if (DynamicDissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"),DissolveValue);
+		
+		if (!bPreHidden && DissolveValue <= 0.4f)
+		{
+			bPreHidden = true;
+			PreHideMesh();
+		}
 	}
 }
 
@@ -504,8 +512,16 @@ void ABlasterCharacter::StartDissolve()
 	if (DissolveCurve && DissolveTimeline)
 	{
 		DissolveTimeline->AddInterpFloat(DissolveCurve,DissolveTrack);
+		
+		
 		DissolveTimeline->Play();
 	}
+}
+
+
+void ABlasterCharacter::PreHideMesh()
+{
+	GetMesh()->SetVisibility(false,true);
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)

@@ -149,6 +149,12 @@ private:
 	float ElimMontageLength = 0.f;
 	
 	FTimerHandle StartDissolveTimerHandle;
+	
+	//hide
+	bool bPreHidden = false;
+	
+	UFUNCTION()
+	void PreHideMesh(); 
 
 	
 	
