@@ -27,6 +27,9 @@ public:
 	void Elim();
 	UFUNCTION(NetMulticast,reliable)
 	void MulticastElim();
+	virtual void Destroyed() override;
+	UFUNCTION(BlueprintCallable)
+	void SpawnElimBot();
 	
 protected:
 	
@@ -156,7 +159,15 @@ private:
 	UFUNCTION()
 	void PreHideMesh(); 
 
+	//ElimBot
+	UPROPERTY(EditAnywhere, Category = ElimBot)
+	UParticleSystem* ELimBotEffect;
 	
+	UPROPERTY(visibleAnywhere, Category = ElimBot)
+	UParticleSystemComponent* ElimBotComponent;
+	
+	UPROPERTY(EditAnywhere, Category = ElimBot)
+	class USoundCue* ElimBotSound;
 	
 	/*
 	//camera zooming in when aiming

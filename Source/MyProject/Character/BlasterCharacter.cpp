@@ -16,6 +16,9 @@
 #include "MyProject/GameMode/BlasterGameMode.h"
 #include "MyProject/PlayerController/BlasterPlayerController.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/particlesystemcomponent.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -63,6 +66,39 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health,MaxHealth);
+	}
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
+	}
+	
+	
+}
+
+void ABlasterCharacter::SpawnElimBot()
+{
+	//Spawn ElimBot
+	if (ELimBotEffect)
+	{
+		FName WaistBone = FName("spine_01"); // 或 "spine_01"
+		FVector SpawnLoc = GetMesh()->GetBoneLocation(WaistBone); // 世界坐标
+
+		// 往上抬一点（世界Z方向）
+		SpawnLoc += FVector(0.f, 0.f, 90.f);
+
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ELimBotEffect, SpawnLoc, GetActorRotation());
+	}
+	if (ElimBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			ElimBotSound,
+			GetActorLocation());
 	}
 }
 
@@ -213,8 +249,9 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bElimmed = true;
 	PlayElimMontage();
 	
+	
 	const float MontageLen = ElimMontageLength;
-	const float Buffer = 0.2f;
+	const float Buffer = 0.3f;
 	const float Delay = FMath::Max(0.f, MontageLen - Buffer);
 
 	FTimerDelegate DissolveDelegate;
@@ -228,6 +265,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 			DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 0.55f);
 		}
 		StartDissolve();
+		
 	});
 
 	GetWorldTimerManager().SetTimer(
@@ -249,6 +287,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
+	
 }
 
 void ABlasterCharacter::ElimTimerFinished()
@@ -259,6 +298,7 @@ void ABlasterCharacter::ElimTimerFinished()
 		BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 		BlasterGameMode->RequestRespawn(this,BlasterPlayerController);
 	}
+	
 }
 
 
@@ -512,7 +552,6 @@ void ABlasterCharacter::StartDissolve()
 	if (DissolveCurve && DissolveTimeline)
 	{
 		DissolveTimeline->AddInterpFloat(DissolveCurve,DissolveTrack);
-		
 		
 		DissolveTimeline->Play();
 	}
