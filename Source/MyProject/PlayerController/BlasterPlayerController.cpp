@@ -7,6 +7,7 @@
 #include "MyProject/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "MyProject/Character/BlasterCharacter.h"
 
 
 void ABlasterPlayerController::BeginPlay()
@@ -18,6 +19,18 @@ void ABlasterPlayerController::BeginPlay()
 	
 }
 
+void ABlasterPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn);
+	if (BlasterCharacter)
+	{
+		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
+	}
+}
+
+
 void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
@@ -25,6 +38,7 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		BlasterHUD->CharacterOverlay &&
 			BlasterHUD->CharacterOverlay->HealthBar && 
 				BlasterHUD->CharacterOverlay->HealthText;
+	
 	if (bHUDValid)
 	{
 		const float HealthPercent = Health / MaxHealth;
@@ -33,3 +47,4 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
 }
+
