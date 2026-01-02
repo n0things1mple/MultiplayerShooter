@@ -49,7 +49,8 @@ protected:
 	void PlayHitReactMontage();
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
-	
+	//poll for any relevant classes and initialize our HUD
+	void PollInit();
 	
 	
 
@@ -168,6 +169,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = ElimBot)
 	class USoundCue* ElimBotSound;
+	
+	
+	class ABlasteryPlayerState* BlasterPlayerState;
 	
 	/*
 	//camera zooming in when aiming

@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/particlesystemcomponent.h"
+#include "MyProject/PlayerState/BlasteryPlayerState.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -124,6 +125,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	
 	HideCameraIfCharacterClose();
 	
+	PollInit();
 	
 
 }
@@ -225,6 +227,18 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
 			BlasterGameMode->PlayerEliminated(this,BlasterPlayerController,AttackerController);
 		
+		}
+	}
+}
+
+void ABlasterCharacter::PollInit()
+{
+	if (BlasterPlayerState == nullptr)
+	{
+		BlasterPlayerState = GetPlayerState<ABlasteryPlayerState>();
+		if (BlasterPlayerState)
+		{
+			BlasterPlayerState->AddToScore(0.f);
 		}
 	}
 }
