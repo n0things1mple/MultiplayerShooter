@@ -11,6 +11,7 @@ void ABlasteryPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ABlasteryPlayerState, Defeats);
+	DOREPLIFETIME(ABlasteryPlayerState, KilledBy);
 	
 }
 
@@ -63,6 +64,8 @@ void ABlasteryPlayerState::AddToDefeats(int32 DefeatsAmount)
 }
 
 
+
+
 void ABlasteryPlayerState::OnRep_Defeats()
 {
 	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetPawn()) : Character;
@@ -72,6 +75,36 @@ void ABlasteryPlayerState::OnRep_Defeats()
 		if (Controller)
 		{
 			Controller->SetHUDDefeats(Defeats);
+		}
+	}
+}
+
+
+
+void ABlasteryPlayerState::UpdateDeathMessage(FString KilledByPlayerName)
+{
+	
+	KilledBy = KilledByPlayerName;
+	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetPawn()) : Character;
+	if (Character)
+	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->UpdateDeathMessage(KilledByPlayerName);
+		}
+	}
+}
+
+void ABlasteryPlayerState::OnRep_KilledBy()
+{
+	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetPawn()) : Character;
+	if (Character)
+	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->UpdateDeathMessage(KilledBy);
 		}
 	}
 }

@@ -25,6 +25,10 @@ void ABlasterGameMode::PlayerEliminated(class ABlasterCharacter* ElimmedCharacte
 	{
 		VictimPlayerState->AddToDefeats(1);
 	}
+	if (AttackerPlayerState && VictimPlayerState)
+	{
+		VictimPlayerState->UpdateDeathMessage(AttackerPlayerState->GetPlayerName());
+	}
 	
 	if (ElimmedCharacter)
 	{
@@ -45,5 +49,11 @@ void ABlasterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 		UGameplayStatics::GetAllActorsOfClass(this,APlayerStart::StaticClass(),ActorStarts);
 		int32 Selection = FMath::RandRange(0,ActorStarts.Num()-1);
 		RestartPlayerAtPlayerStart(ElimmedController,ActorStarts[Selection]);
+		
+		ABlasteryPlayerState* BlasterPlayerState = ElimmedController ? Cast<ABlasteryPlayerState>(ElimmedController->PlayerState) : nullptr;
+		if (BlasterPlayerState)
+		{
+			BlasterPlayerState->UpdateDeathMessage(FString(""));
+		}
 	}
 }

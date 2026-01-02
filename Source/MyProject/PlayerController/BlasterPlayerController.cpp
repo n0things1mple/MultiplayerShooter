@@ -28,6 +28,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
 	}
+	HideDeathMessage();
 }
 
 
@@ -53,8 +54,8 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	bool bHUDValid = BlasterHUD && 
 		BlasterHUD->CharacterOverlay &&
-			BlasterHUD->CharacterOverlay->ScoreAmount && 
-				BlasterHUD->CharacterOverlay->ScoreAmount;
+			BlasterHUD->CharacterOverlay->ScoreAmount;
+				
 	if (bHUDValid)
 	{
 		FString ScoreText = FString::Printf(TEXT("%d"),FMath::RoundToInt(Score));
@@ -67,12 +68,47 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	bool bHUDValid = BlasterHUD && 
 		BlasterHUD->CharacterOverlay &&
-			BlasterHUD->CharacterOverlay->DefeatsAmount && 
-				BlasterHUD->CharacterOverlay->DefeatsAmount;
+			BlasterHUD->CharacterOverlay->DefeatsAmount;
 	if (bHUDValid)
 	{
 		FString DefeatsText = FString::Printf(TEXT("%d"),Defeats);
 		BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+	}
+}
+
+void ABlasterPlayerController::UpdateDeathMessage(const FString KilledByPlayerName)
+{
+	if (KilledByPlayerName.IsEmpty())
+	{
+		HideDeathMessage();
+		return;
+	}
+	
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD && 
+		BlasterHUD->CharacterOverlay &&
+			BlasterHUD->CharacterOverlay->KilledBy && 
+				BlasterHUD->CharacterOverlay->DeathMessage;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->KilledBy->SetText(FText::FromString(KilledByPlayerName));
+		BlasterHUD->CharacterOverlay->DeathMessage->SetVisibility(ESlateVisibility::Visible);
+		BlasterHUD->CharacterOverlay->KilledBy->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void ABlasterPlayerController::HideDeathMessage()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD && 
+		BlasterHUD->CharacterOverlay &&
+			BlasterHUD->CharacterOverlay->KilledBy && 
+				BlasterHUD->CharacterOverlay->DeathMessage;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->KilledBy->SetText(FText::FromString(""));
+		BlasterHUD->CharacterOverlay->DeathMessage->SetVisibility(ESlateVisibility::Collapsed);
+		BlasterHUD->CharacterOverlay->KilledBy->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 
