@@ -110,6 +110,8 @@ private:
 	
 	void StartAutoFireTimer();
 	void AutoFireTimerFinished();
+	
+	bool CanFire();
 };
 
 
