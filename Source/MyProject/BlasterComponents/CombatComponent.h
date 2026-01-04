@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "MyProject/HUD/BlasterHUD.h"
+#include "MyProject/Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f
@@ -112,6 +113,15 @@ private:
 	void AutoFireTimerFinished();
 	
 	bool CanFire();
+	
+	//Carried ammo for the currently-equipped weapon type
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+	
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+	
+	TMap<EWeaponType, int32> CarriedAmmoMap;
 };
 
 
