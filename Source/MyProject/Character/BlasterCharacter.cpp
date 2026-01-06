@@ -20,6 +20,7 @@
 #include "Sound/SoundCue.h"
 #include "Particles/particlesystemcomponent.h"
 #include "MyProject/PlayerState/BlasteryPlayerState.h"
+#include "MyProject/Weapon/WeaponTypes.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -189,6 +190,26 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 	}
 	
 	
+}
+
+void ABlasterCharacter::PlayReloadMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		
+		switch (Combat->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		}
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
 }
 
 void ABlasterCharacter::PlayElimMontage()
@@ -387,6 +408,10 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	if (Combat)
+	{
+		Combat->Reload();
+	}
 }
 
 void ABlasterCharacter::AimButtonPressed()
@@ -511,6 +536,8 @@ FVector ABlasterCharacter::GetHitTarget() const
 	
 }
 
+
+
 void ABlasterCharacter::SeverEquipButtonPressed_Implementation()
 {
 	if (Combat)
@@ -626,7 +653,13 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon()
 	}
 }
 
-
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	if (Combat == nullptr) return ECombatState::ECS_MAX;
+	
+	return Combat->CombatState;
+	
+}
 
 
 
