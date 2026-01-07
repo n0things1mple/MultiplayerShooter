@@ -30,6 +30,8 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
 	}
+	SetHUDCarriedAmmo(0); 
+	SetHUDWeaponIcon(nullptr);
 	HideDeathMessage();
 }
 

@@ -51,10 +51,20 @@ void UCombatComponent::BeginPlay()
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
+		
 		if (Character->HasAuthority())
 		{
 			InitializeCarriedAmmo();
 		}
+		if (Character->IsLocallyControlled())
+		{
+			Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+			if (Controller)
+			{
+				Controller->SetHUDCarriedAmmo(CarriedAmmo);
+			}
+		}
+		
 	}
 	
 
@@ -502,6 +512,7 @@ void UCombatComponent::OnRep_CarriedAmmo()
 void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle,StartingARAmmo);
+	
 }
 
 
