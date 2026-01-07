@@ -22,6 +22,7 @@ public:
 	void HideDeathMessage();
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDWeaponIcon(UTexture2D* WeaponIconTexture);
 	virtual void OnPossess(APawn* InPawn) override;
 	
 protected:

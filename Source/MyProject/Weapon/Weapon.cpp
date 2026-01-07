@@ -236,6 +236,10 @@ void AWeapon::Dropped()
 	SetOwner(nullptr);
 	BlasterOwnerCharacter = nullptr;
 	BlasterOwnerController = nullptr;
+	if (BlasterOwnerController)
+	{
+		BlasterOwnerController->SetHUDWeaponIcon(nullptr);
+	}
 }
 
 void AWeapon::AddAmmo(int32 AmmoToAdd)

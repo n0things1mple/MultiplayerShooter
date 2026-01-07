@@ -70,6 +70,10 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
+	
+	//Weapon Icon
+	UPROPERTY(EditAnywhere)
+	UTexture2D* WeaponIconTexture;
 
 protected:
 	virtual void BeginPlay() override;
@@ -143,4 +147,5 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const {return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const {return Ammo;}
 	FORCEINLINE int GetMaxAmmo() const {return MaxAmmo;}
+	FORCEINLINE UTexture2D* GetWeaponHUD() const{ return WeaponIconTexture; }
 };

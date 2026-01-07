@@ -8,6 +8,8 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "MyProject/Character/BlasterCharacter.h"
+#include "Components/Image.h"
+
 
 
 void ABlasterPlayerController::BeginPlay()
@@ -135,6 +137,28 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"),Ammo);
 		BlasterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
+void ABlasterPlayerController::SetHUDWeaponIcon(UTexture2D* WeaponIconTexture)
+{
+	if (!IsLocalController()) return;
+
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD && 
+		BlasterHUD->CharacterOverlay &&
+			BlasterHUD->CharacterOverlay->WeaponIconImage;
+	if (bHUDValid)
+	{
+		if (WeaponIconTexture)
+		{
+			BlasterHUD->CharacterOverlay->WeaponIconImage->SetBrushFromTexture(WeaponIconTexture);
+			BlasterHUD->CharacterOverlay->WeaponIconImage->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			BlasterHUD->CharacterOverlay->WeaponIconImage->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 }
 

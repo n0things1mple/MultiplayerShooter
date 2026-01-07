@@ -38,6 +38,7 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* CarriedAmmoAmount;
 	
-	
+	UPROPERTY(meta = (BindWidget))
+	class UImage* WeaponIconImage;
 	
 };

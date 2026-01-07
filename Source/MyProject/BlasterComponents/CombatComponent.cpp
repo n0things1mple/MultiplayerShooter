@@ -182,6 +182,11 @@ void UCombatComponent::EquipWeapon(class AWeapon* WeaponToEquip)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+	//set weapon hud
+	if (Controller)
+	{
+		Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
+	}
 	if (EquippedWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
@@ -306,6 +311,11 @@ void UCombatComponent::OnRep_EquippedWeapon()
 				this,
 				EquippedWeapon->EquipSound,
 				Character->GetActorLocation());
+		}
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+		if (Controller)
+		{
+			Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
 		}
 	}
 }
