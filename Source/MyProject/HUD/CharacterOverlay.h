@@ -41,4 +41,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* WeaponIconImage;
 	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* MatchCountdownText;
+	
 };
