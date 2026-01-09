@@ -40,7 +40,7 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
 	}
-	PollInit();
+	
 	
 }
 
@@ -96,8 +96,7 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	else
 	{
 		bInitializeCharacterOverlay = true;
-		HUDHealth = Health;
-		HUDMaxHealth = MaxHealth;
+		
 	}
 }
 
@@ -116,7 +115,7 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 	else
 	{
 		bInitializeCharacterOverlay = true;
-		HUDScore = Score;
+		
 	}
 }
 
@@ -134,7 +133,7 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	else
 	{
 		bInitializeCharacterOverlay = true;
-		HUDDefeats = Defeats;
+		
 	}
 }
 
@@ -245,24 +244,6 @@ void ABlasterPlayerController::SetHUDTime()
 		SetHUDMatchCountdownText(MatchTime - GetServerTime());
 	}
 	CountDownInt = SecondLeft;
-}
-
-void ABlasterPlayerController::PollInit()
-{
-	if (CharacterOverlay == nullptr)
-	{
-		if (BlasterHUD && BlasterHUD->CharacterOverlay)
-		{
-			CharacterOverlay = BlasterHUD->CharacterOverlay;
-			if (CharacterOverlay)
-			{
-				SetHUDHealth(HUDHealth,HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
-				bInitializeCharacterOverlay = false;
-			}
-		}
-	}
 }
 
 
