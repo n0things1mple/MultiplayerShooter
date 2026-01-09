@@ -28,9 +28,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual float GetServerTime(); // synced with server world clock
 	virtual void ReceivedPlayer() override; //sync with server clock asap
+	void OnMatchStateSet(FName State);
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
+	void PollInit();
 	
 	//sync time between client and server
 	
@@ -52,9 +55,20 @@ private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 	
-	float MatchTime = 120.f;
+	float MatchTime = 130.f;
 	
 	uint32 CountDownInt = 0;
-
 	
+	UPROPERTY(ReplicatedUsing= OnRep_MatchState)
+	FName MatchState;
+	UFUNCTION()
+	void OnRep_MatchState();
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay;
+	bool bInitializeCharacterOverlay = false;
+	
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	int32 HUDDefeats;
 };
