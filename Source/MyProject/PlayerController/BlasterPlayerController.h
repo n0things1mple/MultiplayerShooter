@@ -24,11 +24,13 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDWeaponIcon(UTexture2D* WeaponIconTexture);
 	void SetHUDMatchCountdownText(float CountdownTime);
+	void SetHUDAnnouncementCountdown(float CountdownTime);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual float GetServerTime(); // synced with server world clock
 	virtual void ReceivedPlayer() override; //sync with server clock asap
 	void OnMatchStateSet(FName State);
+	void HandleMatchHasStarted();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
@@ -51,11 +53,19 @@ protected:
 	float TimeSyncFrequency = 5.f;
 	
 	float TimeSyncRunningTime = 0.f;
+	
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+	
+	UFUNCTION( Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float WarmUp, float Match, float StartingTime);
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 	
-	float MatchTime = 130.f;
+	float MatchTime = 0.f;
+	float WarmupTime = 0.f;
+	float LevelStartingTime = 0.f;
 	
 	uint32 CountDownInt = 0;
 	

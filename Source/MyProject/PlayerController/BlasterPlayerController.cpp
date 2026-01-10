@@ -11,7 +11,7 @@
 #include "Components/Image.h"
 #include "Net//UnrealNetwork.h"
 #include "MyProject/GameMode/BlasterGameMode.h"
-
+#include "MyProject/HUD/Announcement.h"
 
 
 void ABlasterPlayerController::BeginPlay()
@@ -20,6 +20,7 @@ void ABlasterPlayerController::BeginPlay()
 	
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 	
+	ServerCheckMatchState();
 }
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -236,12 +237,52 @@ void ABlasterPlayerController::SetHUDMatchCountdownText(float CountdownTime)
 	}
 }
 
+void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD && 
+		BlasterHUD->Announcement &&
+			BlasterHUD->Announcement->WarmupTime;
+	if (bHUDValid)
+	{
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+		FString CountdownText = FString::Printf(TEXT("%02d:%02d"),Minutes,Seconds);
+		BlasterHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
-	uint32 SecondLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+	if (HasAuthority())
+	{
+		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+		if (BlasterGameMode)
+		{
+			LevelStartingTime = BlasterGameMode->LevelStartingTime;
+		}
+	}
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		TimeLeft = WarmupTime - (GetServerTime() - LevelStartingTime);
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		TimeLeft = MatchTime - (GetServerTime() - LevelStartingTime - WarmupTime);
+	}
+	
+	uint32 SecondLeft = FMath::CeilToInt(TimeLeft);
 	if (CountDownInt != SecondLeft)
 	{
-		SetHUDMatchCountdownText(MatchTime - GetServerTime());
+		if (MatchState == MatchState::WaitingToStart)
+		{
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress)
+		{
+			SetHUDMatchCountdownText(TimeLeft);
+		}
 	}
 	CountDownInt = SecondLeft;
 }
@@ -265,24 +306,63 @@ void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeO
 void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
+
 	if (MatchState == MatchState::InProgress)
 	{
-		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-		if (BlasterHUD)
-		{
-			BlasterHUD->AddCharacterOverlay();
-		}
+		HandleMatchHasStarted();
 	}
 }
+
+void ABlasterPlayerController::ServerCheckMatchState_Implementation()
+{
+	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode)
+	{
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		MatchState = GameMode->GetMatchState();
+		ClientJoinMidgame(MatchState,WarmupTime,MatchTime,LevelStartingTime);
+		
+		if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+		{
+			BlasterHUD->AddAnnouncement();
+		}
+	}
+	
+}
+void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float WarmUp, float Match, float StartingTime)
+{
+	WarmupTime = WarmUp;
+	MatchTime = Match;
+	LevelStartingTime = StartingTime;
+	MatchState = StateOfMatch;
+	OnMatchStateSet(StateOfMatch);
+	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+	{
+		BlasterHUD->AddAnnouncement();
+	}
+}
+
 
 void ABlasterPlayerController::OnRep_MatchState()
 {
 	if (MatchState == MatchState::InProgress)
 	{
-		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-		if (BlasterHUD)
+		HandleMatchHasStarted();
+	}
+	
+}
+
+void ABlasterPlayerController::HandleMatchHasStarted()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (BlasterHUD)
+	{
+		BlasterHUD->AddCharacterOverlay();
+		if (BlasterHUD->Announcement)
 		{
-			BlasterHUD->AddCharacterOverlay();
+			BlasterHUD->Announcement->SetVisibility( ESlateVisibility::Hidden);
 		}
 	}
 }
