@@ -558,25 +558,37 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 		LastWeapon->ShowPickupWidget(false);
 	}
 }
-
+void ABlasterCharacter::SetComponentsOwnerNoSeeByTag(FName Tag, bool bOwnerNoSee)
+{
+	TArray<UActorComponent*> Comps = GetComponentsByTag(UPrimitiveComponent::StaticClass(), Tag);
+	for (UActorComponent* C : Comps)
+	{
+		if (UPrimitiveComponent* P = Cast<UPrimitiveComponent>(C))
+		{
+			P->SetOwnerNoSee(bOwnerNoSee);
+		}
+	}
+}
 
 void ABlasterCharacter::HideCameraIfCharacterClose()
 {
 	if (!IsLocallyControlled()) return;
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
 	{
-		GetMesh()->SetVisibility(false);
+		GetMesh()->SetOwnerNoSee(true);
+		SetComponentsOwnerNoSeeByTag(FName("Cosmetic"), true);
 		if (Combat && Combat->EquippedWeapon &&Combat->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(true);
 		}
 	}
 	else
 	{
-		GetMesh()->SetVisibility(true);
+		GetMesh()->SetOwnerNoSee(false);
+		SetComponentsOwnerNoSeeByTag(FName("Cosmetic"), false);
 		if (Combat && Combat->EquippedWeapon &&Combat->EquippedWeapon->GetWeaponMesh())
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			Combat->EquippedWeapon->GetWeaponMesh()->SetOwnerNoSee(false);
 		}
 	}
 	

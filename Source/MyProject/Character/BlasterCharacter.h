@@ -103,6 +103,7 @@ private:
 	
 	void HideCameraIfCharacterClose();
 	
+	void SetComponentsOwnerNoSeeByTag(FName Tag, bool bOwnerNoSee);
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 	
