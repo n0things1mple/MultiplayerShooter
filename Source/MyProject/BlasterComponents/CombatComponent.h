@@ -58,6 +58,10 @@ protected:
 	void HandleReload();
 	
 	int32 AmountToReload();
+	
+	void DropWeapon();
+	UFUNCTION(server, Reliable)
+	void ServerDropWeapon();
 private:
 	UPROPERTY()
 	class ABlasterCharacter* Character;

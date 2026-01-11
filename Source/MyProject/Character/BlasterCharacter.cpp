@@ -155,7 +155,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire",IE_Pressed, this,&ABlasterCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire",IE_Released, this,&ABlasterCharacter::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload",IE_Pressed, this,&ABlasterCharacter::ReloadButtonPressed);
-
+	PlayerInputComponent->BindAction("Drop",IE_Pressed, this,&ABlasterCharacter::DropButtonPressed);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -237,8 +237,16 @@ void ABlasterCharacter::PlayHitReactMontage()
 	}
 }
 
+void ABlasterCharacter::DropButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->DropWeapon();
+	}
+}
+
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
-	class AController* InstigatorController, AActor* DamageCauser)
+                                      class AController* InstigatorController, AActor* DamageCauser)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	

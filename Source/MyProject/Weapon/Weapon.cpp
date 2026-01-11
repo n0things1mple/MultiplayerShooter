@@ -147,42 +147,61 @@ void AWeapon::SetWeaponState(EWeaponState State)
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
+		SetReplicateMovement(false);
 		ShowPickupWidget(false);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
+		{
+			const USkeletalMeshSocket* HandSocket =
+				OwnerChar->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+			if (HandSocket)
+			{
+				HandSocket->AttachActor(this, OwnerChar->GetMesh());
+			}
+		}
 		break;
 	case EWeaponState::EWS_Dropped:
 		if (HasAuthority())
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		SetReplicateMovement(true);
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
-	
-	
-	
 }
-
-
 
 void AWeapon::OnRep_WeaponState()
 {
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
+		SetReplicateMovement(false);
 		ShowPickupWidget(false);
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
+		{
+			const USkeletalMeshSocket* HandSocket =
+				OwnerChar->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+			if (HandSocket)
+			{
+				HandSocket->AttachActor(this, OwnerChar->GetMesh());
+			}
+		}
 		
 		break;
 	case EWeaponState::EWS_Dropped:
-		
+		SetReplicateMovement(true);
+		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -231,15 +250,15 @@ void AWeapon::Fire(const FVector& HitTarget)
 void AWeapon::Dropped()
 {
 	SetWeaponState(EWeaponState::EWS_Dropped);
-	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
-	WeaponMesh->DetachFromComponent(DetachRules);
-	SetOwner(nullptr);
-	BlasterOwnerCharacter = nullptr;
-	BlasterOwnerController = nullptr;
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	if (BlasterOwnerController)
 	{
 		BlasterOwnerController->SetHUDWeaponIcon(nullptr);
 	}
+	SetOwner(nullptr);
+	BlasterOwnerCharacter = nullptr;
+	BlasterOwnerController = nullptr;
+	
 }
 
 void AWeapon::AddAmmo(int32 AmmoToAdd)

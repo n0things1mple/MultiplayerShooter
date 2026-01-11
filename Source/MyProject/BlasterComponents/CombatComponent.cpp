@@ -170,16 +170,14 @@ void UCombatComponent::EquipWeapon(class AWeapon* WeaponToEquip)
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Dropped();
+		EquippedWeapon = nullptr;
 	}
 	
 	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
 	EquippedWeapon->SetOwner(Character);
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	
+	
 	EquippedWeapon->SetHUDAmmo();
 
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
@@ -302,33 +300,39 @@ int32 UCombatComponent::AmountToReload()
 	return 0;
 }
 
+void UCombatComponent::DropWeapon()
+{
+	ServerDropWeapon();
+}
+
+void UCombatComponent::ServerDropWeapon_Implementation()
+{
+	if (!Character || !EquippedWeapon) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	EquippedWeapon->Dropped();
+	EquippedWeapon = nullptr;
+}
+
 void UCombatComponent::OnRep_EquippedWeapon()
 {
-	if (EquippedWeapon  && Character)
+	Character = Character ? Character : Cast<ABlasterCharacter>(GetOwner());
+	if (!Character) return;
+
+	if (EquippedWeapon)
 	{
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
-		
-		if (EquippedWeapon->EquipSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(
-				this,
-				EquippedWeapon->EquipSound,
-				Character->GetActorLocation());
-		}
-		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-		if (Controller)
-		{
-			Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
-		}
 	}
+	
+	if (!Character->IsLocallyControlled()) return;
+
+	Controller = Controller ? Controller : Cast<ABlasterPlayerController>(Character->Controller);
+	if (!Controller) return;
+
+	Controller->SetHUDWeaponIcon(EquippedWeapon ? EquippedWeapon->GetWeaponHUD() : nullptr);
+	
 }
+
 
 void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 {
