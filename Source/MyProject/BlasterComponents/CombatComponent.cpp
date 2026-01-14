@@ -303,6 +303,10 @@ int32 UCombatComponent::AmountToReload()
 void UCombatComponent::DropWeapon()
 {
 	ServerDropWeapon();
+	if (Controller)
+	{
+		Controller->SetHUDWeaponAmmo(0);
+	}
 }
 
 void UCombatComponent::ServerDropWeapon_Implementation()
