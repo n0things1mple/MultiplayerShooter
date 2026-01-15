@@ -32,6 +32,8 @@ public:
 	virtual void Destroyed() override;
 	UFUNCTION(BlueprintCallable)
 	void SpawnElimBot();
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
 	
 protected:
 	
@@ -51,6 +53,7 @@ protected:
 	void FireButtonReleased();
 	void PlayHitReactMontage();
 	void DropButtonPressed();
+	void Jump() override;
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 	//poll for any relevant classes and initialize our HUD
@@ -226,5 +229,6 @@ public:
 	FORCEINLINE float GetHealth() const {return Health;}
 	FORCEINLINE float GetMaxHealth() const {return MaxHealth;}
 	ECombatState GetCombatState() const;
-	
+	FORCEINLINE UCombatComponent* GetCombatComponent() const {return Combat;}
+	FORCEINLINE bool GetDisableGameplay() const {return bDisableGameplay;}
 };

@@ -78,6 +78,10 @@ void ABlasterCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
+	}
 	
 	
 }
@@ -140,7 +144,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump",IE_Pressed, this,&ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump",IE_Pressed, this,&ABlasterCharacter::Jump);
 	
 	
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABlasterCharacter::MoveForward);
@@ -164,6 +168,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	
 	DOREPLIFETIME_CONDITION(ABlasterCharacter,OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter,Health);
+	DOREPLIFETIME(ABlasterCharacter,bDisableGameplay);
 	
 }
 
@@ -239,10 +244,17 @@ void ABlasterCharacter::PlayHitReactMontage()
 
 void ABlasterCharacter::DropButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat)
 	{
 		Combat->DropWeapon();
 	}
+}
+
+void ABlasterCharacter::Jump()
+{
+	if (bDisableGameplay) return;
+	Super::Jump();
 }
 
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
@@ -333,10 +345,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	//disable character movement
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	if (BlasterPlayerController)
-	{
-		DisableInput(BlasterPlayerController);
-	}
+	bDisableGameplay = true;
 	
 	//disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -360,6 +369,7 @@ void ABlasterCharacter::ElimTimerFinished()
 
 void ABlasterCharacter::MoveForward(float Value)
 {
+	if (bDisableGameplay) return;
 	if (Controller != nullptr && Value != 0.f)
 	{
 		const FRotator YawRotation(0.f,Controller->GetControlRotation().Yaw,0.f);
@@ -372,6 +382,7 @@ void ABlasterCharacter::MoveForward(float Value)
 
 void ABlasterCharacter::MoveRight(float Value)
 {
+	if (bDisableGameplay) return;
 	const FRotator YawRotation(0.f,Controller->GetControlRotation().Yaw,0.f);
 	const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y));
 	AddMovementInput(Direction,Value);
@@ -389,6 +400,7 @@ void ABlasterCharacter::LookUp(float Value)
 
 void ABlasterCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat)
 	{
 		if (HasAuthority())
@@ -405,6 +417,7 @@ void ABlasterCharacter::EquipButtonPressed()
 
 void ABlasterCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -417,6 +430,7 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat)
 	{
 		Combat->Reload();
@@ -425,6 +439,7 @@ void ABlasterCharacter::ReloadButtonPressed()
 
 void ABlasterCharacter::AimButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->SetAiming(true);
@@ -434,6 +449,7 @@ void ABlasterCharacter::AimButtonPressed()
 
 void ABlasterCharacter::AimButtonReleased()
 {
+	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->SetAiming(false);
@@ -442,6 +458,13 @@ void ABlasterCharacter::AimButtonReleased()
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
+	if (bDisableGameplay)
+	{
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		AO_Yaw = 0.f;
+		return;
+	}
 	if (Combat && Combat->EquippedWeapon == nullptr) return;
 	
 	FVector Velocity = GetVelocity();
@@ -479,6 +502,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 
 void ABlasterCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat)
 	{
 		Combat->FireButtionPressed(true);
@@ -487,6 +511,7 @@ void ABlasterCharacter::FireButtonPressed()
 
 void ABlasterCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay) return;
 	Combat->FireButtionPressed(false);
 }
 /*

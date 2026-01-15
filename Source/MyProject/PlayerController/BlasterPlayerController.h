@@ -31,6 +31,7 @@ public:
 	virtual void ReceivedPlayer() override; //sync with server clock asap
 	void OnMatchStateSet(FName State);
 	void HandleMatchHasStarted();
+	void HandleCooldown();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
@@ -58,13 +59,14 @@ protected:
 	void ServerCheckMatchState();
 	
 	UFUNCTION( Client, Reliable)
-	void ClientJoinMidgame(FName StateOfMatch, float WarmUp, float Match, float StartingTime);
+	void ClientJoinMidgame(FName StateOfMatch, float WarmUp, float Match, float StartingTime, float Cooldown);
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 	
 	float MatchTime = 0.f;
 	float WarmupTime = 0.f;
+	float CooldownTime = 0.f;
 	float LevelStartingTime = 0.f;
 	
 	uint32 CountDownInt = 0;
@@ -76,5 +78,7 @@ private:
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 	bool bInitializeCharacterOverlay = false;
+	UPROPERTY()
+	class ABlasterGameMode* BlasterGameMode;
 	
 };
