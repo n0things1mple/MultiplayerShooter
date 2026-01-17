@@ -8,6 +8,7 @@
 #include "MyProject/Character/BlasterCharacter.h"
 #include "MyProject/PlayerState/BlasteryPlayerState.h"
 #include "MyProject/PlayerController/BlasterPlayerController.h"
+#include "myproject/GameState/BlasterGameState.h"
 
 namespace MatchState
 {
@@ -50,6 +51,7 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	else if (MatchState == MatchState::Cooldown)
 	{
 		CountdownTime = CooldownTime + WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+
 		if (CountdownTime <= 0.f)
 		{
 			RestartGame();
@@ -79,10 +81,12 @@ void ABlasterGameMode::PlayerEliminated(class ABlasterCharacter* ElimmedCharacte
 	ABlasteryPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasteryPlayerState>(AttackerController->PlayerState) : nullptr;
 	
 	ABlasteryPlayerState* VictimPlayerState = VictimController ? Cast<ABlasteryPlayerState>(VictimController->PlayerState) : nullptr;
-
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && BlasterGameState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+		BlasterGameState->UpdateTopScoringPlayers(AttackerPlayerState);
 	}
 
 	if (VictimPlayerState)

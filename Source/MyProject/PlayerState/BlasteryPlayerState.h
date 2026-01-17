@@ -34,6 +34,8 @@ private:
 	
 	UPROPERTY(ReplicatedUsing= OnRep_KilledBy)
 	FString KilledBy;
+public:
+	FORCEINLINE int32 GetDefeats() const { return Defeats; }
 	
 	
 };

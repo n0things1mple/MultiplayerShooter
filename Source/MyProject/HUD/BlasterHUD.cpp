@@ -23,7 +23,7 @@ void ABlasterHUD::BeginPlay()
 
 void ABlasterHUD::AddCharacterOverlay()
 {
-	if (CharacterOverlay)
+	if (CharacterOverlay && !CharacterOverlay->IsInViewport())
 	{
 		CharacterOverlay->AddToViewport();
 	}
