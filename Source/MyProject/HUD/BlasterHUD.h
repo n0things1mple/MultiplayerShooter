@@ -11,13 +11,19 @@ struct FHUDPackage
 {
 	GENERATED_BODY()
 public:
-	class UTexture2D* CrosshairsCenter;
-	UTexture2D* CrosshairsLeft;
-	UTexture2D* CrosshairsRight;
-	UTexture2D* CrosshairsTop;
-	UTexture2D* CrosshairsBottom;
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CrosshairsCenter;
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CrosshairsLeft;
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CrosshairsRight;
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CrosshairsTop;
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CrosshairsBottom;
 	float CrosshairSpread;
 	FLinearColor CrosshairColor;
+
 };
 
 
@@ -41,11 +47,14 @@ public:
 	UPROPERTY()
 	class UAnnouncement* Announcement ;
 	void AddAnnouncement();
+	void ClearHUDPackage();
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 protected:
 	virtual void BeginPlay() override;
 	
 	
 private:
+	UPROPERTY()
 	FHUDPackage HUDPackage;
 	
 	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor);

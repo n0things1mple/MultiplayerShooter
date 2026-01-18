@@ -54,7 +54,13 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 
 		if (CountdownTime <= 0.f)
 		{
-			RestartGame();
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				bUseSeamlessTravel = true;
+				World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
+			}
+			
 		}
 	}
 }

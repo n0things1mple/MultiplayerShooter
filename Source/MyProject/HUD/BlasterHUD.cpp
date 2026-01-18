@@ -13,16 +13,18 @@
 void ABlasterHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	APlayerController* PlayerController = GetOwningPlayerController();
-	if (PlayerController && CharacterOverlayClass)
-	{
-		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
-	}
 	
 }
 
 void ABlasterHUD::AddCharacterOverlay()
 {
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC || !CharacterOverlayClass) return;
+
+	if (!CharacterOverlay)
+	{
+		CharacterOverlay = CreateWidget<UCharacterOverlay>(PC, CharacterOverlayClass);
+	}
 	if (CharacterOverlay && !CharacterOverlay->IsInViewport())
 	{
 		CharacterOverlay->AddToViewport();
@@ -41,7 +43,31 @@ void ABlasterHUD::AddAnnouncement()
 	{
 		Announcement->AddToViewport();
 	}
+	else if (Announcement)
+	{
+		Announcement->SetVisibility(ESlateVisibility::Visible);
+	}
 	
+}
+
+void ABlasterHUD::ClearHUDPackage()
+{
+	HUDPackage = FHUDPackage();
+}
+
+void ABlasterHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (CharacterOverlay)
+	{
+		CharacterOverlay->RemoveFromParent();
+		CharacterOverlay = nullptr;
+	}
+	if (Announcement)
+	{
+		Announcement->RemoveFromParent();
+		Announcement = nullptr;
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 
@@ -88,6 +114,8 @@ void ABlasterHUD::DrawHUD()
 
 void ABlasterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor)
 {
+	if (!Texture || !IsValid(Texture)) return;        
+	if (!Texture->GetResource()) return;                
 	const float TextureWidth = Texture->GetSizeX();
 	const float TextureHeight = Texture->GetSizeY();
 	const FVector2D TextureDrawPoint(ViewportCenter.X -TextureWidth/2.f +Spread.X,ViewportCenter.Y-TextureHeight/2.f + Spread.Y);

@@ -12,6 +12,7 @@
 #include "Net//UnrealNetwork.h"
 #include "MyProject/GameMode/BlasterGameMode.h"
 #include "MyProject/HUD/Announcement.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "MyProject/BlasterComponents/CombatComponent.h"
 #include "MyProject/GameState/BlasterGameState.h"
 #include "MyProject/PlayerState/BlasteryPlayerState.h"
@@ -20,11 +21,17 @@
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-	
+
+	// 每次进入(包含无缝切图后重新进入PlayingState)，都先认为没拿到MatchInfo
+	bReceivedMatchInfo = false;
+	MatchInfoRetryTime = 0.f;
+	CountDownInt = -1;
+
 	ServerCheckMatchState();
 }
+
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -35,15 +42,38 @@ void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetime
 void ABlasterPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+	TryInitHUD();
 	SetHUDTime();
-	
-	TimeSyncRunningTime += DeltaTime;
-	if (IsLocalController() && TimeSyncRunningTime >= TimeSyncFrequency)
+
+	// 只要还没拿到合法的 StartingTime，就持续重试
+	if (!bReceivedMatchInfo)
 	{
-		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
-		TimeSyncRunningTime = 0.f;
+		MatchInfoRetryTime += DeltaTime;
+		if (MatchInfoRetryTime >= 0.25f)
+		{
+			ServerCheckMatchState();
+			MatchInfoRetryTime = 0.f;
+		}
 	}
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+	
+	
+	if (bInitializeCharacterOverlay)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Tick: Polling for HUD Init..."));
+		if (BlasterHUD && BlasterHUD->CharacterOverlay)
+		{
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+			if (BlasterCharacter)
+			{
+				SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+			}
+		}
+	}
+
 	
 }
 
@@ -72,6 +102,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn);
 	if (BlasterCharacter)
 	{
+		bInitializeCharacterOverlay = true;
 		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
 	}
 	SetHUDCarriedAmmo(0); 
@@ -79,6 +110,22 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	HideDeathMessage();
 }
 
+void ABlasterPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+	if (IsLocalController())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+		if (BlasterCharacter)
+		{
+			// 【新增】显式开启轮询
+			bInitializeCharacterOverlay = true; 
+
+			// 尝试立即设置
+			SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+		}
+	}
+}
 
 
 void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -91,15 +138,12 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	
 	if (bHUDValid)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("SetHUDHealth: SUCCESS! HUD Name: %s"), *BlasterHUD->GetName());
 		const float HealthPercent = Health / MaxHealth;
 		BlasterHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
 		FString HealthText = FString::Printf(TEXT("%d/%d"),FMath::RoundToInt(Health),FMath::RoundToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
-	}
-	else
-	{
-		bInitializeCharacterOverlay = true;
-		
+		bInitializeCharacterOverlay = false;
 	}
 }
 
@@ -115,11 +159,9 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 		FString ScoreText = FString::Printf(TEXT("%d"),FMath::RoundToInt(Score));
 		BlasterHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
 	}
-	else
-	{
-		bInitializeCharacterOverlay = true;
-		
-	}
+	
+	
+	
 }
 
 void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
@@ -133,11 +175,7 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 		FString DefeatsText = FString::Printf(TEXT("%d"),Defeats);
 		BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
 	}
-	else
-	{
-		bInitializeCharacterOverlay = true;
-		
-	}
+	
 }
 
 void ABlasterPlayerController::UpdateDeathMessage(const FString KilledByPlayerName)
@@ -187,10 +225,7 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"),Ammo);
 		BlasterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
-	else
-	{
-		bInitializeCharacterOverlay = true; 
-	}
+	
 }
 
 void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -204,10 +239,7 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"),Ammo);
 		BlasterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
-	else
-	{
-		bInitializeCharacterOverlay = true; 
-	}
+	
 }
 
 void ABlasterPlayerController::SetHUDWeaponIcon(UTexture2D* WeaponIconTexture)
@@ -311,6 +343,49 @@ void ABlasterPlayerController::SetHUDTime()
 	CountDownInt = SecondLeft;
 }
 
+void ABlasterPlayerController::TryInitHUD()
+{
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+	if (!BlasterHUD) return;
+
+	// 确保对应状态的widget一定存在
+	if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown)
+	{
+		BlasterHUD->AddAnnouncement();
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		BlasterHUD->AddCharacterOverlay();
+	}
+}
+
+
+void ABlasterPlayerController::BeginPlayingState()
+{
+	Super::BeginPlayingState();
+
+	ClearAllAnnouncementWidgets();
+	ClearAllCharacterOverlayWidgets();
+	
+	BlasterHUD = nullptr;
+	bInitializeCharacterOverlay = true;
+
+	bReceivedMatchInfo = false;
+	MatchInfoRetryTime = 0.f;
+	CountDownInt = -1;
+
+	ServerCheckMatchState();
+	TryInitHUD();
+	if (IsLocalController())
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+
 
 void ABlasterPlayerController::ServerRequestServerTime_Implementation(float TimeOfClientRequest)
 {
@@ -330,8 +405,13 @@ void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeO
 void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
+	TryInitHUD(); // 先确保 UI 存在和显示正确
 	
-	if (MatchState == MatchState::InProgress)
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		HandleWaitingToStart();
+	}
+	else if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
 	}
@@ -344,7 +424,13 @@ void ABlasterPlayerController::OnMatchStateSet(FName State)
 
 void ABlasterPlayerController::OnRep_MatchState()
 {
-	if (MatchState == MatchState::InProgress)
+	TryInitHUD();
+	
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		HandleWaitingToStart();
+	}
+	else if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
 	}
@@ -352,41 +438,99 @@ void ABlasterPlayerController::OnRep_MatchState()
 	{
 		HandleCooldown();
 	}
-	
 }
 
 void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 {
 	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
-	if (GameMode)
+	if (!GameMode) return;
+	
+
+	WarmupTime = GameMode->WarmupTime;
+	MatchTime = GameMode->MatchTime;
+	CooldownTime = GameMode->CooldownTime;
+	LevelStartingTime = GameMode->LevelStartingTime;
+	MatchState = GameMode->GetMatchState();
+
+	ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime, CooldownTime);
+}
+
+void ABlasterPlayerController::ClearAllAnnouncementWidgets()
+{
+	if (!IsLocalController()) return;
+
+	TArray<UUserWidget*> Found;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(this, Found, UAnnouncement::StaticClass(), false);
+	for (UUserWidget* W : Found)
 	{
-		WarmupTime = GameMode->WarmupTime;
-		MatchTime = GameMode->MatchTime;
-		CooldownTime = GameMode->CooldownTime;
-		LevelStartingTime = GameMode->LevelStartingTime;
-		MatchState = GameMode->GetMatchState();
-		ClientJoinMidgame(MatchState,WarmupTime,MatchTime,LevelStartingTime, CooldownTime);
-		
-		if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+		if (W)
 		{
-			BlasterHUD->AddAnnouncement();
+			W->RemoveFromParent();
 		}
 	}
-	
 }
+
+void ABlasterPlayerController::ClearAllCharacterOverlayWidgets()
+{
+	if (!IsLocalController()) return;
+
+	TArray<UUserWidget*> Found;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(this, Found, UCharacterOverlay::StaticClass(), false);
+	for (UUserWidget* W : Found)
+	{
+		if (W)
+		{
+			W->RemoveFromParent();
+		}
+	}
+}
+
+void ABlasterPlayerController::HandleWaitingToStart()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (!BlasterHUD) return;
+
+	BlasterHUD->AddAnnouncement();
+
+	if (BlasterHUD->CharacterOverlay)
+	{
+		BlasterHUD->CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+	if (BlasterHUD->Announcement)
+	{
+		BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+	}
+	if (MatchState == MatchState::WaitingToStart && IsLocalController())
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+
+	CountDownInt = -1;
+	SetHUDTime();
+}
+
+
 void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float WarmUp, float Match, float StartingTime, float Cooldown)
 {
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT: ClientJoinMidgame. PC=%s State=%s Warmup=%.2f Match=%.2f Cooldown=%.2f Start=%.2f"),
+		*GetName(), *StateOfMatch.ToString(), WarmUp, Match, Cooldown, StartingTime);
+
 	WarmupTime = WarmUp;
 	MatchTime = Match;
 	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	MatchState = StateOfMatch;
+
+	bReceivedMatchInfo = true;
+	MatchInfoRetryTime = 0.f;
+	CountDownInt = -1;
+
+	TryInitHUD();
 	OnMatchStateSet(StateOfMatch);
-	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
-	{
-		BlasterHUD->AddAnnouncement();
-	}
+	
+	SetHUDTime();
 }
+
 
 
 void ABlasterPlayerController::HandleMatchHasStarted()
@@ -407,9 +551,10 @@ void ABlasterPlayerController::HandleCooldown()
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	if (BlasterHUD)
 	{
+		BlasterHUD->ClearHUDPackage();
 		if (BlasterHUD->CharacterOverlay)
 		{
-			BlasterHUD->CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
+			BlasterHUD->CharacterOverlay->RemoveFromParent();
 		}
 		bool bHUDValid = BlasterHUD->Announcement && 
 			BlasterHUD->Announcement->AnnouncementText && 
