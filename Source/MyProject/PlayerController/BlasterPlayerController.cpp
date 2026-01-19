@@ -23,8 +23,7 @@ void ABlasterPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-
-	// 每次进入(包含无缝切图后重新进入PlayingState)，都先认为没拿到MatchInfo
+	
 	bReceivedMatchInfo = false;
 	MatchInfoRetryTime = 0.f;
 	CountDownInt = -1;
@@ -44,8 +43,7 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	TryInitHUD();
 	SetHUDTime();
-
-	// 只要还没拿到合法的 StartingTime，就持续重试
+	
 	if (!bReceivedMatchInfo)
 	{
 		MatchInfoRetryTime += DeltaTime;
@@ -70,8 +68,11 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 			if (BlasterCharacter)
 			{
 				SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+				SetHUDScore(0);
+				SetHUDDefeats(0);
 			}
 		}
+		
 	}
 
 	
