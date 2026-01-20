@@ -68,8 +68,7 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 			if (BlasterCharacter)
 			{
 				SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
-				SetHUDScore(0);
-				SetHUDDefeats(0);
+				
 			}
 		}
 		

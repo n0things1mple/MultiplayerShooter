@@ -175,6 +175,7 @@ void UCombatComponent::EquipWeapon(class AWeapon* WeaponToEquip)
 	
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetOwner(Character);
+	EquippedWeapon->SetInstigator(Character);
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	
 	
@@ -521,6 +522,7 @@ void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle,StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher,StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol,StartingPistolAmmo);
 	
 }
 
