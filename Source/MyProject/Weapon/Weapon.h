@@ -74,6 +74,14 @@ public:
 	//Weapon Icon
 	UPROPERTY(EditAnywhere)
 	UTexture2D* WeaponIconTexture;
+	
+	//weapon attach righthand transform
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Attach")
+	FName HandSocketName = FName("RightHandSocket");
+
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Attach")
+	FTransform HandSocketOffset; 
+
 
 protected:
 	virtual void BeginPlay() override;

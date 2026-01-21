@@ -156,11 +156,21 @@ void AWeapon::SetWeaponState(EWeaponState State)
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
 		{
-			const USkeletalMeshSocket* HandSocket =
-				OwnerChar->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-			if (HandSocket)
+			USkeletalMeshComponent* CharMesh = OwnerChar->GetMesh();
+			if (CharMesh)
 			{
-				HandSocket->AttachActor(this, OwnerChar->GetMesh());
+				// 先挂到 socket
+				AttachToComponent(
+					CharMesh,
+					FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+					HandSocketName
+				);
+
+				// 再套这把枪自己的偏移
+				if (USceneComponent* Root = GetRootComponent())
+				{
+					Root->SetRelativeTransform(HandSocketOffset);
+				}
 			}
 		}
 		break;
@@ -190,14 +200,21 @@ void AWeapon::OnRep_WeaponState()
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
 		{
-			const USkeletalMeshSocket* HandSocket =
-				OwnerChar->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-			if (HandSocket)
+			USkeletalMeshComponent* CharMesh = OwnerChar->GetMesh();
+			if (CharMesh)
 			{
-				HandSocket->AttachActor(this, OwnerChar->GetMesh());
+				AttachToComponent(
+					CharMesh,
+					FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+					HandSocketName
+				);
+				
+				if (USceneComponent* Root = GetRootComponent())
+				{
+					Root->SetRelativeTransform(HandSocketOffset);
+				}
 			}
 		}
-		
 		break;
 	case EWeaponState::EWS_Dropped:
 		SetReplicateMovement(true);
