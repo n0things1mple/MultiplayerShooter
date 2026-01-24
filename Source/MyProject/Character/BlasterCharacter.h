@@ -34,6 +34,8 @@ public:
 	void SpawnElimBot();
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
 	
 protected:
 	

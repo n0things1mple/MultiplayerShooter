@@ -227,6 +227,9 @@ void ABlasterCharacter::PlayReloadMontage()
 		case EWeaponType::EWT_Shotgun:
 			SectionName = FName("Pistol");
 			break;		
+		case EWeaponType::EWT_SniperRifle:
+			SectionName = FName("Rifle");
+			break;		
 		}
 		
 		AnimInstance->Montage_JumpToSection(SectionName);
@@ -371,7 +374,16 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-	
+	//hide sniper scope when player is scoping when being eliminated
+	bool bHideSniperScope = IsLocallyControlled() && 
+		Combat && 
+			Combat->bAiming && 
+				Combat->EquippedWeapon && 
+					Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
+	if (bHideSniperScope)
+	{
+		ShowSniperScopeWidget(false);
+	}
 }
 
 void ABlasterCharacter::ElimTimerFinished()
