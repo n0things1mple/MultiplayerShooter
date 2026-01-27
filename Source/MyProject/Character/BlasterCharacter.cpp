@@ -222,13 +222,13 @@ void ABlasterCharacter::PlayReloadMontage()
 			SectionName = FName("Pistol");
 			break;		
 		case EWeaponType::EWT_SubmachineGun:
-			SectionName = FName("Pistol");
+			SectionName = FName("Rifle");
 			break;
 		case EWeaponType::EWT_Shotgun:
-			SectionName = FName("Pistol");
+			SectionName = FName("Shotgun");
 			break;		
 		case EWeaponType::EWT_SniperRifle:
-			SectionName = FName("Rifle");
+			SectionName = FName("Sniper Rifle");
 			break;	
 		case EWeaponType::EWT_GrenadeLauncher:
 			SectionName = FName("Rifle");
