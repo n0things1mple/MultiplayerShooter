@@ -25,6 +25,7 @@ public:
 	void SetHUDWeaponIcon(UTexture2D* WeaponIconTexture);
 	void SetHUDMatchCountdownText(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
+	void SetHUDGrenades(int32 Grenades);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
 	virtual void Tick(float DeltaTime) override;
@@ -93,5 +94,8 @@ private:
 	
 	UPROPERTY()
 	class ABlasterGameMode* BlasterGameMode;
+	
+	int32 HUDGrenades;
+	bool bInitializeGrenades = false;
 	
 };

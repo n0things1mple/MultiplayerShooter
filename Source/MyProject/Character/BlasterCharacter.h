@@ -26,6 +26,7 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
 	void PlayElimMontage();
+	void PlayThrowGrenadeMontage();
 	void Elim();
 	UFUNCTION(NetMulticast,reliable)
 	void MulticastElim();
@@ -48,6 +49,7 @@ protected:
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
 	void ReloadButtonPressed();
+	void GrenadeButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
 	void AimOffset(float DeltaTime);
@@ -105,6 +107,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ElimMontage;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 	
 	
 	void HideCameraIfCharacterClose();
@@ -189,6 +194,12 @@ private:
 	UPROPERTY()
 	class ABlasteryPlayerState* BlasterPlayerState;
 	
+	/**
+  * Grenade
+  */
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* AttachedGrenade;
+	
 	/*
 	//camera zooming in when aiming
 	// 瞄准相机参数
@@ -234,4 +245,5 @@ public:
 	FORCEINLINE UCombatComponent* GetCombatComponent() const {return Combat;}
 	FORCEINLINE bool GetDisableGameplay() const {return bDisableGameplay;}
 	FORCEINLINE UAnimMontage* GetReloadMontage() const {return ReloadMontage;}
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 };

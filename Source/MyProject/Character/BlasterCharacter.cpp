@@ -59,6 +59,10 @@ ABlasterCharacter::ABlasterCharacter()
 	SetMinNetUpdateFrequency(33.f);
 	
 	DissolveTimeline=CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+	
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Attached Grenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 
@@ -126,6 +130,11 @@ void ABlasterCharacter::BeginPlay()
 		BlasterPlayerController->HideDeathMessage();
 	}
 	
+	if (AttachedGrenade)
+	{
+		AttachedGrenade->SetVisibility(false);
+	}
+	
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -163,6 +172,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire",IE_Released, this,&ABlasterCharacter::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload",IE_Pressed, this,&ABlasterCharacter::ReloadButtonPressed);
 	PlayerInputComponent->BindAction("Drop",IE_Pressed, this,&ABlasterCharacter::DropButtonPressed);
+	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &ABlasterCharacter::GrenadeButtonPressed);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -250,6 +260,14 @@ void ABlasterCharacter::PlayElimMontage()
 	
 }
 
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ThrowGrenadeMontage)
+	{
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
 
 void ABlasterCharacter::PlayHitReactMontage()
 {
@@ -282,6 +300,7 @@ void ABlasterCharacter::Jump()
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
                                       class AController* InstigatorController, AActor* DamageCauser)
 {
+	if (bElimmed) return;
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	
 	UpdateHUDHealth();
@@ -469,6 +488,14 @@ void ABlasterCharacter::ReloadButtonPressed()
 	if (Combat)
 	{
 		Combat->Reload();
+	}
+}
+
+void ABlasterCharacter::GrenadeButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->ThrowGrenade();
 	}
 }
 

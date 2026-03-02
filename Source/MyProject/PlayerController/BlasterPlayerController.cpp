@@ -68,7 +68,10 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 			if (BlasterCharacter)
 			{
 				SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
-				
+				if (BlasterCharacter->GetCombatComponent())
+				{
+					SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+				}
 			}
 		}
 		
@@ -104,8 +107,12 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		bInitializeCharacterOverlay = true;
 		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
+		if (BlasterCharacter->GetCombatComponent())
+		{
+			SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+		}
 	}
-	SetHUDCarriedAmmo(0); 
+	SetHUDCarriedAmmo(0);
 	SetHUDWeaponIcon(nullptr);
 	HideDeathMessage();
 }
@@ -118,11 +125,12 @@ void ABlasterPlayerController::OnRep_Pawn()
 		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
 		if (BlasterCharacter)
 		{
-			// 【新增】显式开启轮询
-			bInitializeCharacterOverlay = true; 
-
-			// 尝试立即设置
+			bInitializeCharacterOverlay = true;
 			SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+			if (BlasterCharacter->GetCombatComponent())
+			{
+				SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+			}
 		}
 	}
 }
@@ -301,6 +309,24 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 		int32 Seconds = CountdownTime - Minutes * 60;
 		FString CountdownText = FString::Printf(TEXT("%02d:%02d"),Minutes,Seconds);
 		BlasterHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD &&
+			BlasterHUD->CharacterOverlay &&
+			BlasterHUD->CharacterOverlay->GrenadesText;
+	if (bHUDValid)
+	{
+		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+		BlasterHUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(GrenadesText));
+	}
+	else
+	{
+		bInitializeGrenades = true;
+		HUDGrenades = Grenades;
 	}
 }
 

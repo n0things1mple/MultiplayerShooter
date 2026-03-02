@@ -1,4 +1,5 @@
 #include "ProjectileGrenade.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -16,7 +17,16 @@ AProjectileGrenade::AProjectileGrenade()
 
 void AProjectileGrenade::BeginPlay()
 {
-	Super::BeginPlay(); 
+	Super::BeginPlay();
+
+	// 忽略投掷者的碰撞，防止手榴弹弹到自己身上
+	if (UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		if (GetInstigator())
+		{
+			RootComp->IgnoreActorWhenMoving(GetInstigator(), true);
+		}
+	}
 
 	ProjectileMovementComponent->OnProjectileBounce.AddDynamic(this, &AProjectileGrenade::OnBounce);
 
