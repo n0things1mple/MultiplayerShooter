@@ -21,6 +21,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	void EquipWeapon(class AWeapon* WeaponToEquip );
+	void SwapWeapons();
 	void Reload();
 	UFUNCTION(blueprintCallable)
 	void FinishReloading();
@@ -32,6 +33,7 @@ public:
 	void ThrowGrenadeFinished();
 	UFUNCTION(BlueprintCallable)
 	void LaunchGrenade();
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 protected:
 	
 	virtual void BeginPlay() override;
@@ -42,6 +44,8 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
 	void Fire();
 	
 	
@@ -80,6 +84,9 @@ protected:
 	UFUNCTION(server, Reliable)
 	void ServerDropWeapon();
 	void DropEquippedWeapon();
+	void AttachActorToBackpack(AActor* ActorToAttach);
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
 	void ReloadEmptyWeapon();
@@ -94,6 +101,9 @@ private:
 	
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	AWeapon* SecondaryWeapon;
 	
 	UPROPERTY( Replicated)
 	bool bAiming;
@@ -161,6 +171,9 @@ private:
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 	
 	UPROPERTY(EditAnywhere)
+	int32 MaxCarriedAmmo = 500;
+	
+	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
 	
 	UPROPERTY(EditAnywhere)
@@ -204,6 +217,9 @@ private:
 	void UpdateHUDGrenades();
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+	FORCEINLINE int32 GetCarriedAmmo() const { return CarriedAmmo; }
+	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
+	bool ShouldSwapWeapons();
 };
 
 

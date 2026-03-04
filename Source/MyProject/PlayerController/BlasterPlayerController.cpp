@@ -16,6 +16,7 @@
 #include "MyProject/BlasterComponents/CombatComponent.h"
 #include "MyProject/GameState/BlasterGameState.h"
 #include "MyProject/PlayerState/BlasteryPlayerState.h"
+#include "MyProject/Weapon/Weapon.h"
 
 
 void ABlasterPlayerController::BeginPlay()
@@ -71,7 +72,14 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 				if (BlasterCharacter->GetCombatComponent())
 				{
 					SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+					if (BlasterCharacter->GetCombatComponent()->GetEquippedWeapon())
+					{
+						SetHUDWeaponAmmo(BlasterCharacter->GetCombatComponent()->GetEquippedWeapon()->GetAmmo());
+						SetHUDCarriedAmmo(BlasterCharacter->GetCombatComponent()->GetCarriedAmmo());
+						SetHUDWeaponIcon(BlasterCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponHUD());
+					}
 				}
+				SetHUDShield(BlasterCharacter->GetShield(), BlasterCharacter->GetMaxShield());
 			}
 		}
 		
@@ -107,13 +115,28 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		bInitializeCharacterOverlay = true;
 		SetHUDHealth(BlasterCharacter->GetHealth(),BlasterCharacter->GetMaxHealth());
+		SetHUDShield(BlasterCharacter->GetShield(), BlasterCharacter->GetMaxShield());
 		if (BlasterCharacter->GetCombatComponent())
 		{
 			SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+			if (BlasterCharacter->GetCombatComponent()->GetEquippedWeapon())
+			{
+				SetHUDWeaponAmmo(BlasterCharacter->GetCombatComponent()->GetEquippedWeapon()->GetAmmo());
+				SetHUDCarriedAmmo(BlasterCharacter->GetCombatComponent()->GetCarriedAmmo());
+				SetHUDWeaponIcon(BlasterCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponHUD());
+			}
+			else
+			{
+				SetHUDCarriedAmmo(0);
+				SetHUDWeaponIcon(nullptr);
+			}
+		}
+		else
+		{
+			SetHUDCarriedAmmo(0);
+			SetHUDWeaponIcon(nullptr);
 		}
 	}
-	SetHUDCarriedAmmo(0);
-	SetHUDWeaponIcon(nullptr);
 	HideDeathMessage();
 }
 
@@ -127,6 +150,7 @@ void ABlasterPlayerController::OnRep_Pawn()
 		{
 			bInitializeCharacterOverlay = true;
 			SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+			SetHUDShield(BlasterCharacter->GetShield(), BlasterCharacter->GetMaxShield());
 			if (BlasterCharacter->GetCombatComponent())
 			{
 				SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
@@ -152,6 +176,23 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		FString HealthText = FString::Printf(TEXT("%d/%d"),FMath::RoundToInt(Health),FMath::RoundToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 		bInitializeCharacterOverlay = false;
+	}
+}
+
+void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD &&
+			BlasterHUD->CharacterOverlay &&
+			BlasterHUD->CharacterOverlay->ShieldBar &&
+			BlasterHUD->CharacterOverlay->ShieldText;
+
+	if (bHUDValid)
+	{
+		const float ShieldPercent = Shield / MaxShield;
+		BlasterHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		BlasterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
 	}
 }
 

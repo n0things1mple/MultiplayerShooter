@@ -35,6 +35,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
@@ -185,31 +186,85 @@ void UCombatComponent::EquipWeapon(class AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	
-	DropEquippedWeapon();
-	
-	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetOwner(Character);
-	EquippedWeapon->SetInstigator(Character);
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	
-	
-	EquippedWeapon->SetHUDAmmo();
 
+	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	{
+		EquipSecondaryWeapon(WeaponToEquip);
+	}
+	else
+	{
+		EquipPrimaryWeapon(WeaponToEquip);
+	}
+
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+	
+}
+
+void UCombatComponent::SwapWeapons()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr || !Character->HasAuthority()) return;
+
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+
+	// 新主武器：设状态（会自动挂到右手）、更新HUD
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
-	//set weapon hud
 	if (Controller)
 	{
 		Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
 	}
-	
 	PlayEquipWeaponSound(EquippedWeapon);
-	
+
+	// 新副武器：设状态、挂到背包
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryWeapon);
+}
+
+bool UCombatComponent::ShouldSwapWeapons()
+{
+	return (EquippedWeapon != nullptr && SecondaryWeapon != nullptr);
+}
+
+void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+	DropEquippedWeapon();
+	EquippedWeapon = WeaponToEquip;
+	EquippedWeapon->SetOwner(Character);
+	EquippedWeapon->SetInstigator(Character);
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	if (Controller)
+	{
+		Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
+	}
+	PlayEquipWeaponSound(WeaponToEquip);
 	ReloadEmptyWeapon();
-		
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
-	
+}
+
+void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+	SecondaryWeapon = WeaponToEquip;
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(WeaponToEquip);
+	PlayEquipWeaponSound(WeaponToEquip);
+	SecondaryWeapon->SetOwner(Character);
+}
+
+void UCombatComponent::AttachActorToBackpack(AActor* ActorToAttach)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr) return;
+	const USkeletalMeshSocket* BackpackSocket = Character->GetMesh()->GetSocketByName(FName("BackpackSocket"));
+	if (BackpackSocket)
+	{
+		BackpackSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
 }
 
 void UCombatComponent::Reload()
@@ -346,6 +401,19 @@ void UCombatComponent::LaunchGrenade()
 	
 }
 
+void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+		UpdateCarriedAmmo();
+	}
+	if (EquippedWeapon && EquippedWeapon->IsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+	{
+		Reload();
+	}
+}
+
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReloadMontage();
@@ -431,14 +499,6 @@ void UCombatComponent::DropWeapon()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	ServerDropWeapon();
-	if (Controller)
-	{
-		Controller->SetHUDWeaponAmmo(0);
-	}
-	
-	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
-	Character->bUseControllerRotationYaw = false;
-	
 	
 }
 
@@ -500,8 +560,30 @@ void UCombatComponent::ServerDropWeapon_Implementation()
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	DropEquippedWeapon();
 	EquippedWeapon = nullptr;
-	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
-	Character->bUseControllerRotationYaw = false;
+
+	if (SecondaryWeapon)
+	{
+		EquippedWeapon = SecondaryWeapon;
+		SecondaryWeapon = nullptr;
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquippedWeapon->SetHUDAmmo();
+		UpdateCarriedAmmo();
+		if (Controller)
+		{
+			Controller->SetHUDWeaponIcon(EquippedWeapon->GetWeaponHUD());
+		}
+		PlayEquipWeaponSound(EquippedWeapon);
+	}
+	else
+	{
+		CarriedAmmo = 0;
+		if (Controller)
+		{
+			Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		}
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+		Character->bUseControllerRotationYaw = false;
+	}
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -527,6 +609,24 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 	Controller->SetHUDWeaponIcon(EquippedWeapon ? EquippedWeapon->GetWeaponHUD() : nullptr);
 	
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetHUDAmmo();
+	}
+	else
+	{
+		Controller->SetHUDWeaponAmmo(0);
+	}
+}
+
+void UCombatComponent::OnRep_SecondaryWeapon()
+{
+	if (SecondaryWeapon && Character)
+	{
+		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+		AttachActorToBackpack(SecondaryWeapon);
+		PlayEquipWeaponSound(SecondaryWeapon);
+	}
 }
 
 

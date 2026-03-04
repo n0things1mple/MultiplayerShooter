@@ -16,6 +16,7 @@ class MYPROJECT_API ABlasterPlayerController : public APlayerController
 public:
 	
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void UpdateDeathMessage(const FString KilledByPlayerName);
@@ -97,5 +98,6 @@ private:
 	
 	int32 HUDGrenades;
 	bool bInitializeGrenades = false;
+	
 	
 };

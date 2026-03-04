@@ -63,6 +63,8 @@ void AWeapon::BeginPlay()
 	
 }
 
+
+
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -144,7 +146,13 @@ void AWeapon::OnRep_Owner()
 	}
 	else
 	{
-		SetHUDAmmo();
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(Owner) :
+ BlasterOwnerCharacter;
+		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetEquippedWeapon() &&
+  BlasterOwnerCharacter->GetEquippedWeapon() == this)
+		{
+			SetHUDAmmo();
+		}
 	}
 	
 	
@@ -154,94 +162,82 @@ void AWeapon::OnRep_Owner()
 void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_Equipped:
-		SetReplicateMovement(false);
-		ShowPickupWidget(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EnableCustomDepth(false);
-		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
-		{
-			USkeletalMeshComponent* CharMesh = OwnerChar->GetMesh();
-			if (CharMesh)
-			{
-				// 先挂到 socket
-				AttachToComponent(
-					CharMesh,
-					FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-					HandSocketName
-				);
-
-				// 再套这把枪自己的偏移
-				if (USceneComponent* Root = GetRootComponent())
-				{
-					Root->SetRelativeTransform(HandSocketOffset);
-				}
-			}
-		}
-		break;
-	case EWeaponState::EWS_Dropped:
-		if (HasAuthority())
-		{
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		SetReplicateMovement(true);
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
-		break;
-	}
+	OnWeaponStateSet();
 }
 
 void AWeapon::OnRep_WeaponState()
 {
+	OnWeaponStateSet();
+}
+
+void AWeapon::OnWeaponStateSet()
+{
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
-		SetReplicateMovement(false);
-		ShowPickupWidget(false);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EnableCustomDepth(false);
-		if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
+		OnEquipped();
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+		OnEquippedSecondary();
+		break;
+	case EWeaponState::EWS_Dropped:
+		OnDropped();
+		break;
+	}
+}
+
+void AWeapon::OnEquipped()
+{
+	SetReplicateMovement(false);
+	ShowPickupWidget(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnableCustomDepth(false);
+	if (ABlasterCharacter* OwnerChar = Cast<ABlasterCharacter>(GetOwner()))
+	{
+		USkeletalMeshComponent* CharMesh = OwnerChar->GetMesh();
+		if (CharMesh)
 		{
-			USkeletalMeshComponent* CharMesh = OwnerChar->GetMesh();
-			if (CharMesh)
-			{
-				AttachToComponent(
+			AttachToComponent(
 					CharMesh,
 					FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 					HandSocketName
-				);
+			);
 
-				if (USceneComponent* Root = GetRootComponent())
-				{
-					Root->SetRelativeTransform(HandSocketOffset);
-				}
+			if (USceneComponent* Root = GetRootComponent())
+			{
+				Root->SetRelativeTransform(HandSocketOffset);
 			}
 		}
-		break;
-	case EWeaponState::EWS_Dropped:
-		SetReplicateMovement(true);
-		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
-		break;	
 	}
+}
+
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SetReplicateMovement(true);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
+}
+
+void AWeapon::OnEquippedSecondary()
+{
+	ShowPickupWidget(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnableCustomDepth(false);
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)

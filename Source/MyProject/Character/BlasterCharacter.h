@@ -19,6 +19,10 @@ class MYPROJECT_API ABlasterCharacter : public ACharacter, public IInteractWithC
 public:
 	ABlasterCharacter();
 	void UpdateHUDHealth();
+	void UpdateHUDShield();
+	void UpdateHUDAmmo();
+	void SpawnDefaultWeapon();
+	void DropOrDestroyWeapon(AWeapon* Weapon);
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -84,6 +88,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 	
+	UPROPERTY(VisibleAnywhere)
+	class UBuffComponent* Buff;
+	
 	UFUNCTION(Server, Reliable)
 	void SeverEquipButtonPressed();
 	
@@ -129,7 +136,7 @@ private:
 	float Health = 100.f;
 	
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float LastHealth);
 	
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
@@ -200,30 +207,20 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
 	
-	/*
-	//camera zooming in when aiming
-	// 瞄准相机参数
-	UPROPERTY(EditAnywhere, Category = Camera)
-	float DefaultCameraArmLength = 600.f;
+	// Player Shield
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxShield = 100.f;
 
-	UPROPERTY(EditAnywhere, Category = Camera)
-	float AimingCameraArmLength = 300.f; // 瞄准时拉近
+	UPROPERTY(ReplicatedUsing = OnRep_Shield, VisibleAnywhere, Category = "Player Stats")
+	float Shield = 100.f;
 
-	UPROPERTY(EditAnywhere, Category = Camera)
-	FVector DefaultCameraSocketOffset = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	FVector AimingCameraSocketOffset = FVector(0.f, 50.f, 20.f); // 往右、往上稍微偏一点
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	float DefaultFOV = 90.f;
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	float AimingFOV = 75.f; // 瞄准时稍微 zoom 一点
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	float CameraInterpSpeed = 10.f; // 插值速度
-	*/
+	UFUNCTION()
+	void OnRep_Shield(float LastShield);
+	/**
+   * Default Weapon
+   */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 public:	
 	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -246,4 +243,9 @@ public:
 	FORCEINLINE bool GetDisableGameplay() const {return bDisableGameplay;}
 	FORCEINLINE UAnimMontage* GetReloadMontage() const {return ReloadMontage;}
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
+	FORCEINLINE UBuffComponent* GetBuff() const { return Buff; }
+	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
+	FORCEINLINE float GetShield() const { return Shield; }
+	FORCEINLINE float GetMaxShield() const { return MaxShield; }
+	FORCEINLINE void SetShield(float Amount) { Shield = Amount; }
 };
